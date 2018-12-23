@@ -69,6 +69,74 @@ impl ColorMap for ColorPalette {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct Raster {
+    width: u32,
+    height: u32,
+}
+
+impl Raster {
+    pub fn new(width: u32, height: u32) -> Self {
+        assert!(width > 0 && height > 0);
+        Self { width, height }
+    }
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    pub fn make_transformation(
+        &self,
+        xrange: &Range<f32>,
+        yrange: &Range<f32>,
+    ) -> RasterTransformation {
+        let dx = (xrange.end - xrange.start).abs() / self.width as f32;
+        let dy = (yrange.end - yrange.start).abs() / self.height as f32;
+
+        RasterTransformation {
+            raster: *self,
+            xrange: xrange.clone(),
+            yrange: yrange.clone(),
+            dx,
+            dy,
+        }
+    }
+}
+
+/// Map a (x,y) coordinate within xrange and yrange into the given raster coordinate system and
+/// vice versa.
+pub struct RasterTransformation {
+    raster: Raster,
+    xrange: Range<f32>,
+    yrange: Range<f32>,
+    dx: f32,
+    dy: f32,
+}
+
+impl RasterTransformation {
+    pub fn raster_to_image(&self, rx: u32, ry: u32) -> (f32, f32) {
+        debug_assert!(rx < self.raster.width);
+        debug_assert!(ry < self.raster.height);
+        let x = self.xrange.start + (rx as f32 * self.dx);
+        let y = self.yrange.start + (ry as f32 * self.dy);
+        debug_assert!(x >= self.xrange.start && x <= self.xrange.end);
+        debug_assert!(y >= self.yrange.start && y <= self.yrange.end);
+        (x, y)
+    }
+
+    pub fn image_to_raster(&self, x: f32, y: f32) -> (u32, u32) {
+        debug_assert!(x >= self.xrange.start && x <= self.xrange.end);
+        debug_assert!(y >= self.yrange.start && y <= self.yrange.end);
+        let rx = ((x - self.xrange.start) / self.dx) as u32;
+        let ry = ((y - self.yrange.start) / self.dy) as u32;
+        debug_assert!(rx < self.raster.width);
+        debug_assert!(ry < self.raster.height);
+        (rx, ry)
+    }
+}
+
 pub struct SurfaceFn<F>
 where
     F: Fn(f32, f32) -> f32,
@@ -106,23 +174,18 @@ where
         Self { yrange, ..self }
     }
 
-    pub fn sample_zrange(&self, resolution_x: u32, resolution_y: u32) -> RangeInclusive<f32> {
-        assert!(resolution_x > 0 && resolution_y > 0);
-
-        let dx = self.width() / resolution_x as f32;
-        let dy = self.height() / resolution_y as f32;
-        // Rasterized version of f
+    pub fn sample_zrange(&self, raster: Raster) -> RangeInclusive<f32> {
+        let transformation = raster.make_transformation(&self.xrange, &self.yrange);
         let f_r = |px: u32, py: u32| {
-            let x = self.xrange.start + (px as f32 * dx);
-            let y = self.yrange.start + (py as f32 * dy);
+            let (x, y) = transformation.raster_to_image(px, py);
             (self.f)(x, y)
         };
 
         let mut min_z = f_r(0, 0);
         let mut max_z = min_z;
 
-        for x in 0..resolution_x {
-            for y in 0..resolution_y {
+        for x in 0..raster.width() {
+            for y in 0..raster.height() {
                 let z = f_r(x, y);
                 min_z = min_z.min(z);
                 max_z = max_z.max(z);
@@ -132,24 +195,15 @@ where
         (min_z..=max_z)
     }
 
-    pub fn plot(
-        &self,
-        color_map: &impl ColorMap,
-        resolution_x: u32,
-        resolution_y: u32,
-    ) -> RgbImage {
-        let dx = self.width() / resolution_x as f32;
-        let dy = self.height() / resolution_y as f32;
-        // Rasterized version of f
+    pub fn plot(&self, color_map: &impl ColorMap, raster: Raster) -> RgbImage {
+        let transformation = raster.make_transformation(&self.xrange, &self.yrange);
         let f_r = |px: u32, py: u32| {
-            let x = self.xrange.start + (px as f32 * dx);
-            let y = self.yrange.start + (py as f32 * dy);
+            let (x, y) = transformation.raster_to_image(px, py);
             (self.f)(x, y)
         };
+        let zrange = self.sample_zrange(raster);
 
-        let zrange = self.sample_zrange(resolution_x, resolution_y);
-
-        ImageBuffer::from_fn(resolution_x, resolution_y, |px: u32, py: u32| {
+        ImageBuffer::from_fn(raster.width(), raster.height(), |px: u32, py: u32| {
             color_map.map(f_r(px, py), &zrange)
         })
     }
@@ -166,6 +220,12 @@ fn test_image_save() {
 
     let gray = ColorPalette::grayscale(256);
 
-    surface.plot(&redish, 1024, 1024).save("color.png").unwrap();
-    surface.plot(&gray, 1024, 1024).save("gray.png").unwrap();
+    surface
+        .plot(&redish, Raster::new(1024, 1024))
+        .save("color.png")
+        .unwrap();
+    surface
+        .plot(&gray, Raster::new(1024, 1024))
+        .save("gray.png")
+        .unwrap();
 }
