@@ -15,13 +15,13 @@ impl ColorPalette {
     }
 
     pub fn grayscale(n: usize) -> Self {
-        assert!(n > 1);
-        let mut palette = Self::new();
-        for i in 0..n {
-            let gray = (i as f32) / (n - 1) as f32;
-            palette.add_rgb(gray, gray, gray);
-        }
-        palette
+        Self::linear_gradient(
+            n,
+            Rgb { data: [0, 0, 0] },
+            Rgb {
+                data: [255, 255, 255],
+            },
+        )
     }
 
     pub fn linear_gradient(n: usize, start: Rgb<u8>, end: Rgb<u8>) -> Self {
@@ -164,5 +164,8 @@ fn test_image_save() {
     let redish =
         ColorPalette::linear_gradient(256, Rgb { data: [0, 0, 0] }, Rgb { data: [255, 0, 0] });
 
+    let gray = ColorPalette::grayscale(256);
+
     surface.plot(&redish, 1024, 1024).save("color.png").unwrap();
+    surface.plot(&gray, 1024, 1024).save("gray.png").unwrap();
 }
