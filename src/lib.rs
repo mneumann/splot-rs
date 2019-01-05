@@ -22,6 +22,7 @@ fn test_image_save() {
     let mut canvas = Canvas::new(1024, 1024);
     canvas.splot(&surface, &redish);
     canvas.draw_rect(50, 50, 100, 100, Green.into());
+    canvas.draw_filled_circle(200, 200, 20, Blue.into());
 
     canvas.image().save("color.png").unwrap();
 

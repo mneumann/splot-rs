@@ -59,8 +59,21 @@ impl Canvas {
     pub fn draw_hline(&mut self, x1: u32, y1: u32, w: u32, color: Color) {
         if self.y_visible(y1) {
             let x2 = self.clip_x(x1 + w);
-            for xi in x1..=x2 {
+            for xi in x1..x2 {
                 self.image.put_pixel(xi, y1, color.rgb);
+            }
+        }
+    }
+
+    pub fn draw_hline2(&mut self, x1: i32, y1: i32, w: u32, color: Color) {
+        if y1 >= 0 {
+            let x2 = x1 + w as i32;
+            if x2 >= 0 {
+                if x1 >= 0 {
+                    self.draw_hline(x1 as u32, y1 as u32, w, color);
+                } else {
+                    self.draw_hline(0, y1 as u32, ((w as i32) + x1).abs() as u32, color);
+                }
             }
         }
     }
@@ -92,6 +105,19 @@ impl Canvas {
     /// Does not panic if coordinates are out of range.
     pub fn draw_square(&mut self, x1: u32, y1: u32, d: u32, color: Color) {
         self.draw_rect(x1, y1, d, d, color);
+    }
+
+    /// Draws a filled circle.
+    ///
+    /// Does not panic if coordinates are out of range.
+    pub fn draw_filled_circle(&mut self, x1: u32, y1: u32, r: u32, color: Color) {
+        self.draw_hline2(x1 as i32 - r as i32, y1 as i32, 2 * r, color);
+
+        for i in 1..=r {
+            let w = ((r as f32).powi(2) - (i as f32).powi(2)).sqrt() as u32;
+            self.draw_hline2(x1 as i32 - w as i32, y1 as i32 - i as i32, 2 * w, color);
+            self.draw_hline2(x1 as i32 - w as i32, y1 as i32 + i as i32, 2 * w, color);
+        }
     }
 
     pub fn make_transformation(
