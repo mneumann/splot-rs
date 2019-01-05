@@ -193,7 +193,7 @@ pub struct RasterTransformation {
 }
 
 impl RasterTransformation {
-    fn raster_to_image(&self, rx: u32, ry: u32) -> (f32, f32) {
+    pub fn raster_to_image(&self, rx: u32, ry: u32) -> (f32, f32) {
         debug_assert!(rx < self.width);
         debug_assert!(ry < self.height);
         let x = *self.xrange.start() + (rx as f32 * self.dx);
@@ -203,7 +203,7 @@ impl RasterTransformation {
         (x, y)
     }
 
-    fn image_to_raster(&self, x: f32, y: f32) -> (u32, u32) {
+    pub fn image_to_raster(&self, x: f32, y: f32) -> (u32, u32) {
         /*
         debug_assert!(x >= self.xrange.start);
         debug_assert!(x <= self.xrange.end);
