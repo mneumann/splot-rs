@@ -1,4 +1,4 @@
-use crate::{Black, Color, ColorMap, White};
+use crate::{Color, ColorMap, BLACK, WHITE};
 use std::ops::RangeInclusive;
 
 pub struct ColorPalette {
@@ -11,7 +11,7 @@ impl ColorPalette {
     }
 
     pub fn grayscale(n: usize) -> Self {
-        Self::linear_gradient(n, Black, White)
+        Self::linear_gradient(n, BLACK, WHITE)
     }
 
     pub fn linear_gradient(n: usize, start: impl Into<Color>, end: impl Into<Color>) -> Self {

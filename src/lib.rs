@@ -16,13 +16,13 @@ fn test_image_save() {
         .with_xrange(-10.0..=10.0)
         .with_yrange(-10.0..=10.0);
 
-    let redish = ColorPalette::linear_gradient(256, Black, Red);
+    let redish = ColorPalette::linear_gradient(256, BLACK, RED);
     let gray = ColorPalette::grayscale(256);
 
     let mut canvas = Canvas::new(1024, 1024);
     canvas.splot(&surface, &redish);
-    canvas.draw_rect(50, 50, 100, 100, Green.into());
-    canvas.draw_filled_circle(200, 200, 20, Blue.into());
+    canvas.draw_rect(50, 50, 100, 100, GREEN);
+    canvas.draw_filled_circle(200, 200, 20, BLUE);
 
     canvas.image().save("color.png").unwrap();
 

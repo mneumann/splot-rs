@@ -1,27 +1,23 @@
 use image::Rgb;
 
-macro_rules! color {
-    ($name:ident, $r:expr, $g:expr, $b:expr) => {
-        #[derive(Debug, Copy, Clone)]
-        pub struct $name;
-        impl From<$name> for Color {
-            fn from(_: $name) -> Self {
-                ($r, $g, $b).into()
-            }
-        }
-    };
-}
-
-color!(Black, 0, 0, 0);
-color!(White, 255, 255, 255);
-color!(Red, 255, 0, 0);
-color!(Green, 0, 255, 0);
-color!(Blue, 0, 0, 255);
-
 #[derive(Debug, Copy, Clone)]
 pub struct Color {
     pub rgb: Rgb<u8>,
 }
+
+macro_rules! color {
+    ($name:ident, $r:expr, $g:expr, $b:expr) => {
+        pub const $name: Color = Color {
+            rgb: Rgb { data: [$r, $g, $b] },
+        };
+    };
+}
+
+color!(BLACK, 0, 0, 0);
+color!(WHITE, 255, 255, 255);
+color!(RED, 255, 0, 0);
+color!(GREEN, 0, 255, 0);
+color!(BLUE, 0, 0, 255);
 
 impl From<(u8, u8, u8)> for Color {
     fn from(t: (u8, u8, u8)) -> Self {
