@@ -14,10 +14,7 @@ impl ColorPalette {
         Self::linear_gradient(n, BLACK, WHITE)
     }
 
-    pub fn linear_gradient(n: usize, start: impl Into<Color>, end: impl Into<Color>) -> Self {
-        let start_color = start.into();
-        let end_color = end.into();
-
+    pub fn linear_gradient(n: usize, start_color: Color, end_color: Color) -> Self {
         assert!(n > 1);
         let mut palette = Self::new();
         let d0 =
@@ -28,22 +25,25 @@ impl ColorPalette {
             (f32::from(end_color.rgb[2]) - f32::from(start_color.rgb[2])).abs() / (n - 1) as f32;
 
         for i in 0..n {
-            palette.add_color((
-                (start_color.rgb[0] as f32 + (d0 * i as f32))
-                    .min(255.0)
-                    .max(0.0) as u8,
-                (start_color.rgb[1] as f32 + (d1 * i as f32))
-                    .min(255.0)
-                    .max(0.0) as u8,
-                (start_color.rgb[2] as f32 + (d2 * i as f32))
-                    .min(255.0)
-                    .max(0.0) as u8,
-            ));
+            palette.add_color(
+                (
+                    (start_color.rgb[0] as f32 + (d0 * i as f32))
+                        .min(255.0)
+                        .max(0.0) as u8,
+                    (start_color.rgb[1] as f32 + (d1 * i as f32))
+                        .min(255.0)
+                        .max(0.0) as u8,
+                    (start_color.rgb[2] as f32 + (d2 * i as f32))
+                        .min(255.0)
+                        .max(0.0) as u8,
+                )
+                    .into(),
+            );
         }
         palette
     }
 
-    pub fn add_color(&mut self, color: impl Into<Color>) {
+    pub fn add_color(&mut self, color: Color) {
         self.colors.push(color.into());
     }
 }
